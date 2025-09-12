@@ -18,59 +18,130 @@
 
 var currentSlide = 1
 
-if(!window.suffix) {
+var currentSlideTO = null
+
+if (!window.suffix) {
     var suffix = "/index.html"
-}
-
-var loadingTO = null
-
-function setSlide(no) {
-    slideDisplay.data = no + suffix
-}
-
-function nextSlide() {
-    if(currentSlide == window.slidecount) return
-    currentSlide++
-    setSlide(currentSlide)
-}
-
-function previousSlide() {
-    if(currentSlide === 1) return
-    currentSlide--
-    setSlide(currentSlide)
 }
 
 /**
  * @type { HTMLObjectElement}
  */
 var slideDisplay
-if(document.getElementById) {
+if (document.getElementById) {
     slideDisplay = document.getElementById("slide-output")
-} else if(document.all) {
+} else if (document.all) {
     slideDisplay = document.all["slide-output"]
 } else {
     throw new Error("Could not find the slide output")
 }
 
-slideDisplay.onerror = function() {
-    previousSlide()
-    //chrome does weird shit where object stops rendering at all after an invalid slide
-    //create a new <object> and replace the old one with it
-    slidecount = currentSlide
+slideDisplay.data = currentSlide + suffix
+
+/**
+ * whether or not the browser runs <object>.onerror
+ */
+var runsOnError = false
+var testing = false
+
+doRunsErrorTest()
+
+/**
+ * @description Tests if the browser supports <object>.onerror
+ *
+ * If the browser does not suppor this we fall back to a shitty timeout method
+ */
+function doRunsErrorTest() {
+    testing = true
+
+    var orig = slideDisplay.data
+
+    if (!window.loadingtext) {
+        slideDisplay.data = "data:text/html,<p>loading...</p>"
+    } else {
+        slideDisplay.data = "data:text/html," + loadingtext
+    }
+
     var o = document.createElement("object")
-    o.id = slideDisplay.id
-    o.data = slideDisplay.data
-    slideDisplay.replaceWith(o)
-    slideDisplay = o
+
+    function reset() {
+        testing = false
+        o.remove()
+        slideDisplay.data = orig
+    }
+
+    o.data = "http://fake-uri.invalid"
+    o.onerror = function err() {
+        runsOnError = true
+        reset()
+        slideDisplay.removeEventListener("error", err)
+    }
+    document.body.append(o)
+
+    setTimeout(function() {
+        reset()
+    }, 1000)
 }
 
-slideDisplay.data = currentSlide + suffix
+
+function foundEnd() {
+    previousSlide()
+    slidecount = currentSlide
+}
+
+function setSlide(no) {
+    if (testing) return
+    //dont let the user switch slides while the to is active, and the slidecount is unknown, because otherwise the user might just keep going
+    if (!runsOnError && currentSlideTO && !window.slidecount) return
+
+    currentSlide = no
+
+    slideDisplay.data = no + suffix
+
+    //some browsers (COUGH, WEBKIT) do not run object.onerror, so just set a 500ms timeout
+    if (!runsOnError) {
+        currentSlideTO = setTimeout(function() {
+            currentSlideTO = null
+            if (slideDisplay.offsetWidth == 0) {
+                foundEnd()
+            }
+        }, 500)
+    }
+}
+
+function nextSlide() {
+    if (currentSlide == window.slidecount) return
+    setSlide(currentSlide + 1)
+}
+
+function previousSlide() {
+    if (currentSlide === 1) return
+    setSlide(currentSlide - 1)
+}
+
+var int = setInterval(function() {
+    if(testing) return
+    clearInterval(int)
+
+    //this should only be set once testing is complete
+    //otherwise the browser may run this onerror function
+    slideDisplay.onerror = function() {
+        foundEnd()
+        //chrome does weird shit where object stops rendering at all after an invalid slide
+        //create a new <object> and replace the old one with it
+        var o = document.createElement("object")
+        o.id = slideDisplay.id
+        o.data = slideDisplay.data
+        slideDisplay.replaceWith(o)
+        slideDisplay = o
+    }
+}, 20)
 
 addEventListener("keydown", function() {
     var e = /**@type {KeyboardEvent}*/(event)
-    if(e.key == 'ArrowLeft') {
+    if (e.key == 'ArrowLeft') {
         previousSlide()
-    } else if(e.key == 'ArrowRight') {
+    } else if (e.key == 'ArrowRight') {
         nextSlide()
     }
 })
