@@ -66,7 +66,7 @@ function doRunsErrorTest() {
 
     function reset() {
         testing = false
-        o.remove()
+        o.parentNode.removeChild(o)
         slideDisplay.data = orig
     }
 
@@ -76,7 +76,7 @@ function doRunsErrorTest() {
         reset()
         slideDisplay.removeEventListener("error", err)
     }
-    document.body.append(o)
+    document.body.appendChild(o)
 
     setTimeout(function() {
         reset()
@@ -120,20 +120,22 @@ function previousSlide() {
 }
 
 var int = setInterval(function() {
-    if(testing) return
+    if (testing) return
     clearInterval(int)
 
     //this should only be set once testing is complete
     //otherwise the browser may run this onerror function
     slideDisplay.onerror = function() {
         foundEnd()
-        //chrome does weird shit where object stops rendering at all after an invalid slide
-        //create a new <object> and replace the old one with it
-        var o = document.createElement("object")
-        o.id = slideDisplay.id
-        o.data = slideDisplay.data
-        slideDisplay.replaceWith(o)
-        slideDisplay = o
+        if (slideDisplay.replaceWith) {
+            //chrome does weird shit where object stops rendering at all after an invalid slide
+            //create a new <object> and replace the old one with it
+            var o = document.createElement("object")
+            o.id = slideDisplay.id
+            o.data = slideDisplay.data
+            slideDisplay.replaceWith(o)
+            slideDisplay = o
+        }
     }
 }, 20)
 
