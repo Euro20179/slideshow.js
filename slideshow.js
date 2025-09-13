@@ -195,7 +195,7 @@ function handleKeyPress(event) {
 }
 
 if ("onkeydown" in window) {
-    document.onkeydown = function() { handleKeyPress(event) }
+    document.onkeydown = function(e) { handleKeyPress(e || window.event) }
 } else {
-    document.onkeypress = function() { handleKeyPress(event) }
+    document.onkeypress = function(e) { handleKeyPress(e || window.event) }
 }
