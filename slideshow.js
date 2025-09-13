@@ -74,11 +74,10 @@ function getURI(fromEl) {
 function doRunsErrorTest() {
     testing = true
 
-    if(navigator.appName == "Microsoft Internet Explorer") {
+    if (navigator.appName == "Microsoft Internet Explorer") {
         var parent = slideDisplay.parentElement
         var ifr = document.createElement("iframe")
         ifr.src = slideDisplay.data
-        ifr.style = slideDisplay.style
         ifr.width = slideDisplay.width
         ifr.height = slideDisplay.height
         parent.replaceChild(ifr, slideDisplay)
@@ -116,8 +115,49 @@ function doRunsErrorTest() {
 
 
 function foundEnd() {
-    previousSlide()
     slidecount = currentSlide
+}
+
+/**
+ * @description tests if no exists, if it **might** exist, success is called, if it **guaranteed** does not exist, fail is called
+ */
+function testSlide(no, success, fail) {
+    if (runsOnError) {
+        var obj = document.createElement(slideDisplay.tagName)
+        obj.onerror = function() {
+            obj.parentElement.removeChild(obj)
+            fail(no)
+        }
+        obj.onload = function() {
+            obj.parentElement.removeChild(obj)
+            success(no)
+        }
+        setURI("./" + no + suffix, obj)
+        document.body.appendChild(obj)
+        return
+    }
+
+    if (window.fetch) {
+        fetch("./" + no + suffix, {
+            mode: "no-cors"
+        }).then(function(res) { res.status == 200 || res.status == 0 ? success(no) : fail(no) })
+        .catch(function(err) { fail(no) })
+        return
+    }
+
+    if (slideDisplay.tagName != "IFRAME") {
+        currentSlideTO = setTimeout(function() {
+            currentSlideTO = null
+            if (slideDisplay.offsetWidth == 0) {
+                fail(no)
+            }
+            success(no)
+        }, 500)
+        return
+    }
+
+    //who knows
+    success(no)
 }
 
 function setSlide(no) {
@@ -125,19 +165,12 @@ function setSlide(no) {
     //dont let the user switch slides while the to is active, and the slidecount is unknown, because otherwise the user might just keep going
     if (!runsOnError && currentSlideTO && !window.slidecount) return
 
-    currentSlide = no
-
-    setURI("./" + no + suffix)
-
-    //some browsers (COUGH, WEBKIT) do not run object.onerror, so just set a 500ms timeout
-    if (!runsOnError) {
-        currentSlideTO = setTimeout(function() {
-            currentSlideTO = null
-            if (slideDisplay.offsetWidth == 0) {
-                foundEnd()
-            }
-        }, 500)
-    }
+    testSlide(no, function() {
+        currentSlide = no
+        setURI("./" + no + suffix)
+    }, function() {
+        foundEnd()
+    })
 }
 
 function nextSlide() {
@@ -150,36 +183,18 @@ function previousSlide() {
     setSlide(currentSlide - 1)
 }
 
-var int = setInterval(function() {
-    if (testing) return
-    clearInterval(int)
-
-    //this should only be set once testing is complete
-    //otherwise the browser may run this onerror function
-    slideDisplay.onerror = function() {
-        foundEnd()
-        //chrome does weird shit where object stops rendering at all after an invalid slide
-        //create a new <object> and replace the old one with it
-        var o = document.createElement(slideDisplay.tagName)
-        o.id = slideDisplay.id
-        setURI(getURI(), o)
-        slideDisplay.parentElement.replaceChild(o, slideDisplay)
-        slideDisplay = o
-    }
-}, 20)
-
 function handleKeyPress(event) {
     var e = /**@type {KeyboardEvent}*/(event)
-    //80 == 'p', 37 == 'arrowright
-    if (e.key == 'ArrowLeft' || e.keyCode == 80 || e.keyCode == 37) {
+    //112 == 'p', 37 == 'arrowright
+    if (e.key == 'ArrowLeft' || e.keyCode == 112 || e.keyCode == 37) {
         previousSlide()
-    //110 == 'n', 39 == 'arrowright
+        //110 == 'n', 39 == 'arrowright
     } else if (e.key == 'ArrowRight' || e.keyCode == 110 || e.keyCode == 39) {
         nextSlide()
     }
 }
 
-if("onkeydown" in window) {
+if ("onkeydown" in window) {
     document.onkeydown = function() { handleKeyPress(event) }
 } else {
     document.onkeypress = function() { handleKeyPress(event) }
