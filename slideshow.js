@@ -36,7 +36,7 @@ if (document.getElementById) {
     throw new Error("Could not find the slide output")
 }
 
-slideDisplay.data = "./" + currentSlide + suffix
+setURI("./" + currentSlide + suffix)
 
 /**
  * whether or not the browser runs <object>.onerror
@@ -46,6 +46,26 @@ var testing = false
 
 doRunsErrorTest()
 
+function setURI(uri, forEl) {
+    if (forEl == undefined) {
+        forEl = slideDisplay
+    }
+
+    if (forEl.tagName == "IFRAME") {
+        forEl.src = uri
+    } else forEl.data = uri
+}
+
+function getURI(fromEl) {
+    if (fromEl == undefined) {
+        fromEl = slideDisplay
+    }
+    if (fromEl.tagName == "IFRAME") {
+        return fromEl.src
+    }
+    return fromEl.data
+}
+
 /**
  * @description Tests if the browser supports <object>.onerror
  *
@@ -54,24 +74,35 @@ doRunsErrorTest()
 function doRunsErrorTest() {
     testing = true
 
-    var orig = slideDisplay.data
-
-    if (!window.loadingtext) {
-        slideDisplay.data = "data:text/html,<p>loading...</p>"
-    } else {
-        slideDisplay.data = "data:text/html," + loadingtext
+    if(navigator.appName == "Microsoft Internet Explorer") {
+        var parent = slideDisplay.parentElement
+        var ifr = document.createElement("iframe")
+        ifr.src = slideDisplay.data
+        ifr.style = slideDisplay.style
+        ifr.width = slideDisplay.width
+        ifr.height = slideDisplay.height
+        parent.replaceChild(ifr, slideDisplay)
+        slideDisplay = ifr
     }
 
-    var o = document.createElement("object")
+    var orig = getURI()
+
+    if (!window.loadingtext) {
+        setURI("data:text/html,<p>loading...</p>")
+    } else {
+        setURI("data:text/html," + loadingtext)
+    }
+
+    var o = document.createElement(slideDisplay.tagName)
 
     function reset() {
         testing = false
         o.parentElement.removeChild(o)
-        slideDisplay.data = orig
+        setURI(orig)
         clearTimeout(to)
     }
 
-    o.data = "http://fake-uri.invalid"
+    setURI("http://fake-uri.invalid", o)
     o.onerror = function err() {
         runsOnError = true
         reset()
@@ -96,7 +127,7 @@ function setSlide(no) {
 
     currentSlide = no
 
-    slideDisplay.data = "./" + no + suffix
+    setURI("./" + no + suffix)
 
     //some browsers (COUGH, WEBKIT) do not run object.onerror, so just set a 500ms timeout
     if (!runsOnError) {
@@ -127,15 +158,13 @@ var int = setInterval(function() {
     //otherwise the browser may run this onerror function
     slideDisplay.onerror = function() {
         foundEnd()
-        if (slideDisplay.replaceWith) {
-            //chrome does weird shit where object stops rendering at all after an invalid slide
-            //create a new <object> and replace the old one with it
-            var o = document.createElement("object")
-            o.id = slideDisplay.id
-            o.data = slideDisplay.data
-            slideDisplay.replaceWith(o)
-            slideDisplay = o
-        }
+        //chrome does weird shit where object stops rendering at all after an invalid slide
+        //create a new <object> and replace the old one with it
+        var o = document.createElement(slideDisplay.tagName)
+        o.id = slideDisplay.id
+        setURI(getURI(), o)
+        slideDisplay.parentElement.replaceChild(o, slideDisplay)
+        slideDisplay = o
     }
 }, 20)
 
