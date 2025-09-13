@@ -36,7 +36,7 @@ if (document.getElementById) {
     throw new Error("Could not find the slide output")
 }
 
-slideDisplay.data = currentSlide + suffix
+slideDisplay.data = "./" + currentSlide + suffix
 
 /**
  * whether or not the browser runs <object>.onerror
@@ -66,19 +66,19 @@ function doRunsErrorTest() {
 
     function reset() {
         testing = false
-        o.parentNode.removeChild(o)
+        o.parentElement.removeChild(o)
         slideDisplay.data = orig
+        clearTimeout(to)
     }
 
     o.data = "http://fake-uri.invalid"
     o.onerror = function err() {
         runsOnError = true
         reset()
-        slideDisplay.removeEventListener("error", err)
     }
     document.body.appendChild(o)
 
-    setTimeout(function() {
+    var to = setTimeout(function() {
         reset()
     }, 1000)
 }
@@ -96,7 +96,7 @@ function setSlide(no) {
 
     currentSlide = no
 
-    slideDisplay.data = no + suffix
+    slideDisplay.data = "./" + no + suffix
 
     //some browsers (COUGH, WEBKIT) do not run object.onerror, so just set a 500ms timeout
     if (!runsOnError) {
@@ -139,11 +139,19 @@ var int = setInterval(function() {
     }
 }, 20)
 
-addEventListener("keydown", function() {
+function handleKeyPress(event) {
     var e = /**@type {KeyboardEvent}*/(event)
-    if (e.key == 'ArrowLeft') {
+    //80 == 'p', 37 == 'arrowright
+    if (e.key == 'ArrowLeft' || e.keyCode == 80 || e.keyCode == 37) {
         previousSlide()
-    } else if (e.key == 'ArrowRight') {
+    //110 == 'n', 39 == 'arrowright
+    } else if (e.key == 'ArrowRight' || e.keyCode == 110 || e.keyCode == 39) {
         nextSlide()
     }
-})
+}
+
+if("onkeydown" in window) {
+    document.onkeydown = function() { handleKeyPress(event) }
+} else {
+    document.onkeypress = function() { handleKeyPress(event) }
+}
