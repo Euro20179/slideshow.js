@@ -36,7 +36,18 @@ if (document.getElementById) {
     throw new Error("Could not find the slide output")
 }
 
-setURI("./" + currentSlide + suffix)
+function getSlideURI(slideno) {
+    if(typeof suffix == 'string') {
+        return "./" + slideno + suffix
+    }
+    else if(typeof suffix == 'function') {
+        return './' + slideno + suffix(slideno)
+    }
+    alert("Invalid suffix")
+    throw new Error("Invalid suffix")
+}
+
+setURI(getSlideURI(currentSlide))
 
 /**
  * whether or not the browser runs <object>.onerror
@@ -132,13 +143,13 @@ function testSlide(no, success, fail) {
             obj.parentElement.removeChild(obj)
             success(no)
         }
-        setURI("./" + no + suffix, obj)
+        setURI(getSlideURI(no), obj)
         document.body.appendChild(obj)
         return
     }
 
     if (window.fetch) {
-        fetch("./" + no + suffix, {
+        fetch(getSlideURI(no), {
             mode: "no-cors"
         }).then(function(res) { res.status == 200 || res.status == 0 ? success(no) : fail(no) })
         .catch(function(err) { fail(no) })
@@ -167,7 +178,7 @@ function setSlide(no) {
 
     testSlide(no, function() {
         currentSlide = no
-        setURI("./" + no + suffix)
+        setURI(getSlideURI(no))
     }, function() {
         foundEnd()
     })

@@ -39,6 +39,7 @@ You can add anything else you'd like.
 ### Options
 `slidecount`: set the slidecount, instead of slideshow.js having to figure it out
 `suffix`: instead of `<slideno>/index.html`, use `<slideno>suffix` (/ must be added if you want it)
+`suffix` may also be a function that takes the current slide number as input, and returns a string as the file which is a suffix for the slide
 
 To use the options, create a script tag above the slideshow.js one and set them using `var`
 eg:
