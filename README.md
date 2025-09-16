@@ -12,6 +12,13 @@ It is untested in netscape.
 Have a js file that sets keybinds to go to the next and previous slides,
 and that can detect the end of the slideshow.
 
+### Tested browsers
+* IE 7 (tested in an HTA file)
+* NS 9
+* Modern FF
+* Modern Chrome
+* Modern Webkit
+
 ## Usage
 
 Make a directory structure like this
