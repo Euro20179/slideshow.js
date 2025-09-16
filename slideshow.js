@@ -213,7 +213,7 @@ function handleKeyPress(event) {
 }
 
 if ("onkeydown" in window) {
-    document.onkeydown = function(e) { handleKeyPress(e || window.event) }
+    document.onkeydown = slideDisplay.onkeydown = function(e) { handleKeyPress(e || window.event) }
 } else {
-    document.onkeypress = function(e) { handleKeyPress(e || window.event) }
+    document.onkeypress = slideDisplay.onkeypress = function(e) { handleKeyPress(e || window.event) }
 }
