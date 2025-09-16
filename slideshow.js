@@ -65,6 +65,12 @@ function setURI(uri, forEl) {
     if (forEl.tagName == "IFRAME") {
         forEl.src = uri
     } else forEl.data = uri
+
+    //some browsers (*cough* goanna *cough*) do not update object correctly
+    //this fixes that -_-
+    if(forEl.replaceWith) {
+        forEl.replaceWith(forEl)
+    }
 }
 
 function getURI(fromEl) {
