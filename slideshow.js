@@ -37,10 +37,10 @@ if (document.getElementById) {
 }
 
 function getSlideURI(slideno) {
-    if(typeof suffix == 'string') {
+    if (typeof suffix == 'string') {
         return "./" + slideno + suffix
     }
-    else if(typeof suffix == 'function') {
+    else if (typeof suffix == 'function') {
         return './' + slideno + suffix(slideno)
     }
     alert("Invalid suffix")
@@ -85,8 +85,8 @@ function getURI(fromEl) {
 function doRunsErrorTest() {
     testing = true
 
-    if (navigator.appName == "Microsoft Internet Explorer") {
-        var parent = slideDisplay.parentElement
+    if (navigator.appName == "Microsoft Internet Explorer" || /Navigator/.test(navigator.userAgent)) {
+        var parent = slideDisplay.parentNode
         var ifr = document.createElement("iframe")
         ifr.src = slideDisplay.data
         ifr.width = slideDisplay.width
@@ -107,7 +107,7 @@ function doRunsErrorTest() {
 
     function reset() {
         testing = false
-        o.parentElement.removeChild(o)
+            o.parentNode.removeChild(o)
         setURI(orig)
         clearTimeout(to)
     }
@@ -152,7 +152,7 @@ function testSlide(no, success, fail) {
         fetch(getSlideURI(no), {
             mode: "no-cors"
         }).then(function(res) { res.status == 200 || res.status == 0 ? success(no) : fail(no) })
-        .catch(function(err) { fail(no) })
+            .catch(function(err) { fail(no) })
         return
     }
 
