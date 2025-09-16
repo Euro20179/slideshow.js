@@ -85,6 +85,8 @@ function getURI(fromEl) {
 function doRunsErrorTest() {
     testing = true
 
+    //updating the data of <object> doesn't work in IE nor netscape for some reason
+    //switch the element to an iframe
     if (navigator.appName == "Microsoft Internet Explorer" || /Navigator/.test(navigator.userAgent)) {
         var parent = slideDisplay.parentNode
         var ifr = document.createElement("iframe")
@@ -103,20 +105,25 @@ function doRunsErrorTest() {
         setURI("data:text/html," + loadingtext)
     }
 
+    //the goal of this is to test if onerror works for the in-use element
+    //this may not necessarily be <object> since it could've been switched above
     var o = document.createElement(slideDisplay.tagName)
 
     function reset() {
         testing = false
-            o.parentNode.removeChild(o)
+        o.parentNode.removeChild(o)
         setURI(orig)
         clearTimeout(to)
     }
 
     setURI("http://fake-uri.invalid", o)
+
+    //if this runs before the setTimeout (1000ms) then onerror triggers
     o.onerror = function err() {
         runsOnError = true
         reset()
     }
+
     document.body.appendChild(o)
 
     var to = setTimeout(function() {
